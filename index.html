@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vibe 课程报告 · 大语言模型对齐技术综述（示例）</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- 工具栏：仅在网页预览时显示，导出 PDF 时自动隐藏 -->
+  <div class="toolbar" id="toolbar">
+    <span class="toolbar-title">Vibe 课程报告 · 网页预览</span>
+    <span class="toolbar-hint">让 AI 修改本页内容与样式 → 运行 <code>npm run export:pdf</code> 导出 A4 PDF</span>
+  </div>
+
+  <main class="page" id="report">
+
+    <!-- ============ 封面 ============ -->
+    <section class="cover">
+      <div class="cover-school">某某大学</div>
+      <div class="cover-sub">COURSE&nbsp;REPORT</div>
+      <h1 class="cover-title">课程作业报告</h1>
+      <div class="cover-topic">大语言模型对齐技术综述：从 RLHF 到 DPO</div>
+
+      <table class="cover-meta">
+        <tbody>
+          <tr><th>课程名称</th><td>人工智能导论</td></tr>
+          <tr><th>报告题目</th><td>大语言模型对齐技术综述：从 RLHF 到 DPO</td></tr>
+          <tr><th>姓　　名</th><td>张三</td></tr>
+          <tr><th>学　　号</th><td>2023XXXXXX</td></tr>
+          <tr><th>学院 / 专业</th><td>计算机学院 · 计算机科学与技术</td></tr>
+          <tr><th>指导教师</th><td>李四 教授</td></tr>
+          <tr><th>完成日期</th><td>2026 年 5 月 20 日</td></tr>
+        </tbody>
+      </table>
+
+      <div class="cover-note">（本封面及全文内容为模板演示用 mock 数据，请替换为真实信息）</div>
+    </section>
+
+    <!-- ============ 摘要 ============ -->
+    <section class="abstract">
+      <h2 class="front-title">摘　　要</h2>
+      <p>
+        大语言模型在预训练之后具备强大的通用能力，但其输出并不天然符合人类意图与价值观，
+        “对齐”（Alignment）因此成为大语言模型走向实际应用的关键环节。本文围绕大语言模型对齐技术
+        的发展脉络，系统梳理了以 RLHF 为代表的基于人类反馈的强化学习方法，以及以 DPO 为代表的
+        直接偏好优化方法，从优化目标、训练流程、计算开销与稳定性等维度对两类方法进行对比分析，
+        并结合公开实验结果讨论各自的适用场景与局限。最后，本文对对齐技术的未来发展方向进行了展望。
+      </p>
+      <p class="keywords"><strong>关键词：</strong>大语言模型；对齐；人类反馈强化学习；直接偏好优化；偏好学习</p>
+    </section>
+
+    <!-- ============ 目录 ============ -->
+    <section class="toc">
+      <h2 class="front-title">目　　录</h2>
+      <nav class="toc-list">
+        <a class="toc-item lv1" href="#sec-1"><span class="toc-text">1　引言</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-1"></span></a>
+        <a class="toc-item lv1" href="#sec-2"><span class="toc-text">2　对齐技术背景</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-2"></span></a>
+        <a class="toc-item lv2" href="#sec-2-1"><span class="toc-text">2.1　对齐问题的提出</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-2-1"></span></a>
+        <a class="toc-item lv2" href="#sec-2-2"><span class="toc-text">2.2　基于人类反馈的强化学习（RLHF）</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-2-2"></span></a>
+        <a class="toc-item lv2" href="#sec-2-3"><span class="toc-text">2.3　直接偏好优化（DPO）</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-2-3"></span></a>
+        <a class="toc-item lv1" href="#sec-3"><span class="toc-text">3　方法对比与实验分析</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-3"></span></a>
+        <a class="toc-item lv2" href="#sec-3-1"><span class="toc-text">3.1　对比维度</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-3-1"></span></a>
+        <a class="toc-item lv2" href="#sec-3-2"><span class="toc-text">3.2　训练动态示意</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-3-2"></span></a>
+        <a class="toc-item lv1" href="#sec-4"><span class="toc-text">4　讨论</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-4"></span></a>
+        <a class="toc-item lv1" href="#sec-5"><span class="toc-text">5　结论</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-5"></span></a>
+        <a class="toc-item lv1" href="#sec-ref"><span class="toc-text">参考文献</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-ref"></span></a>
+      </nav>
+      <p class="toc-hint">提示：目录页码由导出脚本在生成 PDF 时自动计算填充，网页预览中为空属正常现象。</p>
+    </section>
+
+    <!-- ============ 正文 ============ -->
+    <section class="content">
+
+      <h2 id="sec-1">1　引言</h2>
+      <p>
+        以 GPT 系列为代表的大语言模型（Large Language Model, LLM）通过大规模语料预训练获得了
+        通用的语言理解与生成能力。然而，预训练目标仅仅是“预测下一个词”，模型可能生成虚假、
+        有害或不符合用户意图的内容。如何让模型的行为与人类的意图和价值观保持一致，即
+        “对齐”（Alignment）问题，成为大语言模型研究与应用中的核心议题之一。
+      </p>
+      <p>
+        本文第 2 节介绍对齐技术的背景与两条主要技术路线；第 3 节从多个维度对比两类方法并给出
+        实验分析；第 4 节讨论现有方法的局限；第 5 节总结全文并展望未来方向。
+      </p>
+
+      <h2 id="sec-2">2　对齐技术背景</h2>
+
+      <h3 id="sec-2-1">2.1　对齐问题的提出</h3>
+      <p>
+        对齐问题指模型的实际行为与人类期望之间存在的系统性偏差。大语言模型在海量无标注语料上
+        训练，语料中不可避免包含偏见、错误与有害信息；同时，纯粹的最大似然训练目标并不区分
+        “像人话”与“对人有用”。因此，在预训练之后引入以人类偏好为信号的微调阶段，成为提升模型
+        可用性与安全性的标准做法。
+      </p>
+
+      <h3 id="sec-2-2">2.2　基于人类反馈的强化学习（RLHF）</h3>
+      <p>
+        RLHF（Reinforcement Learning from Human Feedback）是当前最具代表性的对齐方法，其典型流程
+        包括三个步骤：
+      </p>
+      <ol>
+        <li><strong>监督微调（SFT）：</strong>在高质量人工标注的指令数据上对预训练模型进行微调，得到初始策略模型；</li>
+        <li><strong>奖励模型训练（RM）：</strong>收集人类对多个候选回复的偏好排序，训练奖励模型对回复质量打分；</li>
+        <li><strong>强化学习优化（PPO）：</strong>以奖励模型输出为奖励信号，使用近端策略优化算法微调策略模型，并加入 KL 散度约束防止模型偏离过远。</li>
+      </ol>
+      <p>
+        RLHF 的优化目标可以形式化地表示为：
+      </p>
+      <div class="formula">
+        max<sub>&theta;</sub>&nbsp; E<sub>(x,y)~&pi;<sub>&theta;</sub></sub>[ r<sub>&phi;</sub>(x, y) ] &nbsp;&minus;&nbsp; &beta; &middot; D<sub>KL</sub>( &pi;<sub>&theta;</sub> &Vert; &pi;<sub>ref</sub> )
+      </div>
+      <p>
+        其中 r<sub>&phi;</sub>(x,&nbsp;y) 为奖励模型打分，&beta; 控制与参考模型 &pi;<sub>ref</sub> 的偏离程度。
+      </p>
+
+      <h3 id="sec-2-3">2.3　直接偏好优化（DPO）</h3>
+      <p>
+        DPO（Direct Preference Optimization）提出了一种无需显式训练奖励模型、也无需强化学习过程的
+        替代方案。其核心观察是：RLHF 中的最优策略与奖励函数之间存在闭式对应关系，因此可以直接
+        在偏好数据上以分类目标优化策略模型。DPO 将复杂的 RL 流程简化为一个稳定的监督式学习目标，
+        显著降低了训练复杂度与调参难度。
+      </p>
+
+      <h2 id="sec-3">3　方法对比与实验分析</h2>
+
+      <h3 id="sec-3-1">3.1　对比维度</h3>
+      <p>
+        表 1 从优化范式、训练流程、计算开销与稳定性四个维度对比 RLHF 与 DPO。
+      </p>
+
+      <figure class="table-figure">
+        <figcaption class="table-caption">表 1　RLHF 与 DPO 方法对比</figcaption>
+        <table class="three-line">
+          <thead>
+            <tr><th>对比维度</th><th>RLHF</th><th>DPO</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>优化范式</td><td>强化学习（PPO）</td><td>监督式分类目标</td></tr>
+            <tr><td>奖励模型</td><td>需要单独训练</td><td>隐式表达，无需训练</td></tr>
+            <tr><td>训练流程</td><td>SFT → RM → PPO，三阶段</td><td>SFT → DPO，两阶段</td></tr>
+            <tr><td>显存占用</td><td>需同时加载 4 个模型，较高</td><td>需加载 2 个模型，较低</td></tr>
+            <tr><td>训练稳定性</td><td>对超参数敏感，易发散</td><td>较稳定，调参成本低</td></tr>
+            <tr><td>能力上限</td><td>在线采样，探索能力更强</td><td>受限于离线偏好数据分布</td></tr>
+          </tbody>
+        </table>
+      </figure>
+
+      <h3 id="sec-3-2">3.2　训练动态示意</h3>
+      <p>
+        图 1 给出了两种方法在偏好数据上训练时的奖励准确率变化示意（数据为演示用模拟数据）。
+        可以看到，DPO 在训练早期收敛更快，而 RLHF 由于引入在线采样，在后期具有更高的上限。
+      </p>
+
+      <figure class="img-figure">
+        <img src="assets/figure-reward-accuracy.png" alt="RLHF 与 DPO 训练过程奖励准确率对比示意图" />
+        <figcaption>图 1　RLHF 与 DPO 训练过程奖励准确率对比（模拟数据，仅供演示）</figcaption>
+      </figure>
+
+      <h2 id="sec-4">4　讨论</h2>
+      <p>
+        尽管 DPO 在工程上更为简洁，但近期研究表明其性能受离线偏好数据分布的限制，在分布外数据上
+        可能出现退化；而 RLHF 的在线探索机制在数学推理等复杂任务上仍具优势。实践中，越来越多工作
+        采用“DPO 冷启动 + 在线 RL 精调”的混合方案，兼顾稳定性与能力上限。此外，奖励黑客
+        （Reward Hacking）、偏好数据标注成本与标注者偏见，仍是所有偏好学习方法共同面临的问题。
+      </p>
+
+      <h2 id="sec-5">5　结论</h2>
+      <p>
+        本文梳理了大语言模型对齐技术中 RLHF 与 DPO 两条主要路线。RLHF 通过奖励模型与强化学习
+        实现高质量对齐，但流程复杂、训练不稳定；DPO 以监督式目标直接优化偏好，工程简洁、训练稳定，
+        已成为轻量级对齐的主流选择。未来，在线偏好学习、过程奖励模型与可扩展监督（Scalable
+        Oversight）可能成为对齐技术进一步发展的重要方向。
+      </p>
+
+      <h2 id="sec-ref" class="ref-title">参考文献</h2>
+      <ol class="references">
+        <li>OUYANG L, WU J, JIANG X, et al. Training language models to follow instructions with human feedback[J]. Advances in Neural Information Processing Systems, 2022, 35: 27730-27744.</li>
+        <li>RAFAILOV R, SHARMA A, MITCHELL E, et al. Direct preference optimization: Your language model is secretly a reward model[J]. Advances in Neural Information Processing Systems, 2023, 36: 53728-53741.</li>
+        <li>CHRISTIANO P F, LEIKE J, BROWN T, et al. Deep reinforcement learning from human preferences[J]. Advances in Neural Information Processing Systems, 2017, 30: 4299-4307.</li>
+        <li>STIENNON N, OUYANG L, WU J, et al. Learning to summarize from human feedback[J]. Advances in Neural Information Processing Systems, 2020, 33: 3008-3021.</li>
+        <li>KAUFMANN T, WENG P, BENGS V, et al. A survey of reinforcement learning from human feedback[EB/OL]. (2023-12-12)[2026-05-01]. https://arxiv.org/abs/2312.14925.</li>
+        <li>周志华. 机器学习[M]. 北京: 清华大学出版社, 2016.</li>
+      </ol>
+
+    </section>
+  </main>
+
+</body>
+</html>

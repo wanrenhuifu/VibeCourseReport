@@ -1,0 +1,6 @@
+node_modules/
+export/
+memory/
+.claude/
+.DS_Store
+Thumbs.db

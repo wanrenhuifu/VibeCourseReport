@@ -1,0 +1,15 @@
+{
+  "name": "vibe-course-report",
+  "version": "1.0.0",
+  "description": "像 vibe coding 一样写课程作业报告：AI 直接编辑 HTML/CSS 报告，一键导出 A4 多页 PDF。",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "preview": "vite --port 4173",
+    "export:pdf": "node scripts/export-pdf.mjs"
+  },
+  "devDependencies": {
+    "puppeteer-core": "^23.11.1",
+    "vite": "^6.0.7"
+  }
+}

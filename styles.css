@@ -1,0 +1,323 @@
+/* ============================================================
+   Vibe 课程报告 · 样式表
+   - 屏幕预览：A4 纸张观感（793.7px 宽，居中，带阴影）
+   - 导出 PDF：body.exporting 下还原为纯内容流，由脚本按 A4 分页
+   ============================================================ */
+
+:root {
+  /* 页面几何（与 scripts/export-pdf.mjs 中的 PAGE 常量保持一致，均为 mm×96/25.4 精确换算。
+     不要取整：--content-w 参与目录页码测量，取整会让测量宽度偏离 PDF 实际分页宽度，
+     长文档下造成目录页码 ±1 页偏差 */
+  --sheet-w: 793.7008px;       /* A4 纸宽 210mm @96dpi */
+  --margin-x: 105.8268px;      /* 左/右边距 = 28mm */
+  --margin-y: 94.4882px;       /* 上/下边距 = 25mm */
+  --content-w: calc(var(--sheet-w) - 2 * var(--margin-x));  /* = 582.0472px = 154mm，与 PDF 分页宽度一致 */
+  /* 单页内容高 = (297−25−25)mm @96dpi。导出脚本会注入同名变量覆盖（值相同）；
+     此处默认声明保证注入逻辑失效时导出模式仍有正确页高，而不是静默退化 */
+  --content-height: 933.5433px;
+
+  /* 字体（注意：无头 Linux/Docker 需安装 CJK 字体包，否则中文会显示为豆腐块。
+     常见修复：sudo apt install fonts-noto-cjk 或 yum install google-noto-cjk-fonts） */
+  --serif: "Noto Serif CJK SC", "Source Han Serif SC", "Songti SC", "SimSun", serif;
+  --sans: "Noto Sans CJK SC", "Source Han Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+
+  /* 颜色 */
+  --ink: #1a1a1a;
+  --accent: #1f3864;           /* 学术深蓝 */
+  --muted: #666;
+  --hairline: #d9d9d9;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: #e8e8ea;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.9;
+}
+
+/* ---------- 工具栏（导出时隐藏） ---------- */
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 20px;
+  background: #1f2937;
+  color: #e5e7eb;
+  font-family: var(--sans);
+  font-size: 13px;
+}
+.toolbar-title { font-weight: 700; letter-spacing: 0.5px; }
+.toolbar-hint code {
+  background: rgba(255, 255, 255, 0.12);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+/* ---------- 纸张容器 ---------- */
+.page {
+  width: var(--sheet-w);
+  margin: 28px auto 60px;
+  background: #fff;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.14);
+  padding: var(--margin-y) var(--margin-x);
+}
+
+/* 前置部分（封面/摘要/目录）之间的屏幕分隔线 */
+.page > section + section {
+  border-top: 2px dashed var(--hairline);
+  padding-top: 40px;
+  margin-top: 48px;
+}
+
+/* ============================================================
+   封面
+   ============================================================ */
+.cover { text-align: center; font-family: var(--sans); }
+
+.cover-school {
+  margin-top: 24px;
+  font-family: var(--serif);
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: 14px;
+  text-indent: 14px; /* 视觉居中补偿 */
+  color: var(--accent);
+}
+.cover-sub {
+  margin-top: 6px;
+  font-size: 12px;
+  letter-spacing: 6px;
+  color: var(--muted);
+}
+.cover-title {
+  margin: 56px 0 8px;
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 10px;
+  text-indent: 10px;
+  color: var(--ink);
+}
+.cover-topic {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--accent);
+  border-bottom: 2px solid var(--accent);
+  display: inline-block;
+  padding: 0 12px 6px;
+}
+
+.cover-meta {
+  margin: 48px auto 0;
+  border-collapse: collapse;
+  font-size: 15px;
+  text-align: left;
+}
+.cover-meta th {
+  font-weight: 600;
+  padding: 8px 18px 8px 0;
+  white-space: nowrap;
+  color: var(--ink);
+  text-align: justify;
+  text-align-last: justify;
+}
+.cover-meta td {
+  padding: 8px 0 8px 18px;
+  border-bottom: 1px solid #999;
+  min-width: 300px;
+  text-align: center;
+}
+
+.cover-note {
+  margin-top: 64px;
+  font-size: 12px;
+  color: #999;
+}
+
+/* ============================================================
+   摘要 / 目录 标题
+   ============================================================ */
+.front-title {
+  font-family: var(--sans);
+  font-size: 20px;
+  font-weight: 700;
+  text-align: center;
+  letter-spacing: 6px;
+  color: var(--ink);
+  margin: 8px 0 28px;
+}
+
+.abstract p {
+  text-indent: 2em;
+  text-align: justify;
+  margin: 0 0 12px;
+}
+.abstract .keywords { text-indent: 0; margin-top: 20px; }
+
+/* ============================================================
+   目录
+   ============================================================ */
+.toc-list { display: flex; flex-direction: column; gap: 6px; }
+
+.toc-item {
+  display: flex;
+  align-items: baseline;
+  text-decoration: none;
+  color: var(--ink);
+  font-size: 14.5px;
+}
+.toc-item.lv1 { font-weight: 600; font-family: var(--sans); margin-top: 8px; }
+.toc-item.lv2 { padding-left: 2em; }
+
+.toc-dots {
+  flex: 1;
+  margin: 0 6px;
+  border-bottom: 1.5px dotted #aaa;
+  transform: translateY(-4px);
+}
+.toc-page { min-width: 2em; text-align: right; font-variant-numeric: tabular-nums; }
+
+.toc-hint {
+  margin-top: 28px;
+  font-size: 12px;
+  color: #999;
+  font-family: var(--sans);
+}
+
+/* ============================================================
+   正文
+   ============================================================ */
+.content h2, .content h3 {
+  font-family: var(--sans);
+  font-weight: 700;
+  break-after: avoid;
+}
+.content h2 {
+  font-size: 19px;
+  color: var(--accent);
+  margin: 34px 0 14px;
+  padding-bottom: 6px;
+  border-bottom: 1.5px solid var(--accent);
+}
+/* 标题后的首段/首列表加上 break-before: avoid，与标题的 break-after: avoid
+   形成双向保护，减少孤行标题出现在页底的几率 */
+:is(.content h2, .content h3) + :is(p, ol, ul) {
+  break-before: avoid;
+}
+.content h2.ref-title {
+  text-align: center;
+  border-bottom: none;
+  letter-spacing: 6px;
+  color: var(--ink);
+}
+.content h3 {
+  font-size: 16px;
+  margin: 24px 0 10px;
+}
+.content p {
+  text-indent: 2em;
+  text-align: justify;
+  margin: 0 0 10px;
+}
+.content ol:not(.references), .content ul {
+  margin: 4px 0 12px;
+  padding-left: 2.5em;
+}
+.content li { margin-bottom: 6px; text-align: justify; }
+
+/* 公式块 */
+.formula {
+  text-align: center;
+  font-style: italic;
+  font-size: 16.5px;
+  margin: 14px 0;
+  break-inside: avoid;
+}
+
+/* 三线表 */
+.table-figure { margin: 16px 0 22px; break-inside: avoid; }
+.table-caption {
+  text-align: center;
+  font-family: var(--sans);
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.three-line {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  font-family: var(--sans);
+  border-top: 2px solid var(--ink);
+  border-bottom: 2px solid var(--ink);
+}
+.three-line th, .three-line td {
+  padding: 7px 10px;
+  text-align: center;
+}
+.three-line thead th {
+  border-bottom: 1px solid var(--ink);
+  font-weight: 700;
+}
+.three-line tbody tr + tr td { border-top: 0.5px solid #ddd; }
+
+/* 插图 */
+.img-figure { margin: 18px 0 24px; text-align: center; break-inside: avoid; }
+.img-figure img {
+  max-width: 82%;
+  border: 1px solid var(--hairline);
+  border-radius: 4px;
+}
+.img-figure figcaption {
+  margin-top: 8px;
+  font-size: 13.5px;
+  font-family: var(--sans);
+  color: #333;
+}
+
+/* 参考文献（GB/T 7714 编号制） */
+.references {
+  margin: 10px 0 0;
+  padding-left: 2.2em;
+  font-size: 13.5px;
+  line-height: 1.8;
+}
+.references li { margin-bottom: 6px; text-align: justify; }
+
+/* ============================================================
+   导出模式：由 scripts/export-pdf.mjs 注入 body.exporting
+   恢复为纯内容流，A4 分页由 Chromium 完成
+   ============================================================ */
+body.exporting { background: #fff; }
+body.exporting .toolbar,
+body.exporting .toc-hint,
+body.exporting .cover-note { display: none; }
+
+body.exporting .page {
+  width: var(--content-w);
+  margin: 0;
+  padding: 0;
+  box-shadow: none;
+}
+body.exporting .page > section + section {
+  border-top: none;
+  padding-top: 0;
+  margin-top: 0;
+}
+/* 封面/摘要/目录各占一页（页高取 :root 的 --content-height 默认值，导出脚本会注入同名变量覆盖） */
+body.exporting .cover,
+body.exporting .abstract,
+body.exporting .toc {
+  height: var(--content-height);
+  overflow: hidden;
+  break-after: page;
+  page-break-after: always;
+}
