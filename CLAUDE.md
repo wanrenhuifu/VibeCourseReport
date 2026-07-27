@@ -15,6 +15,7 @@ VibeCourseReport — 像 vibe coding 一样写课程作业报告。核心理念�
 npm install
 
 # 本地预览
+npm run dev              # 或 npm start（前端肌肉记忆别名）
 npm run preview          # Vite 启动开发服务器，访问 http://localhost:4173
 
 # 导出 PDF（屏幕布局渲染，非打印媒体）
@@ -22,6 +23,15 @@ npm run export:pdf       # 默认输出到 export/vibe-course-report-demo.pdf
 
 # 也可以指定输出路径
 node scripts/export-pdf.mjs export/自定义文件名.pdf
+
+# Watch 模式：监听源文件变化自动重新导出
+npm run export:pdf:watch
+
+# 自动生成目录（从正文 h2/h3 扫描，更新 .toc-list）
+npm run build:toc
+
+# 结构校验（检查目录对应、图片存在、标题 id）
+npm run check
 ```
 
 如果找不到浏览器，设置 `CHROME_PATH` 环境变量指向 Chrome/Chromium 可执行文件。注意依赖的是 `puppeteer-core`（不自带浏览器，必须用系统 Chrome/Chromium）；在无头 Linux / Docker 环境还需安装 CJK 字体包（如 `fonts-noto-cjk`），否则中文渲染为豆腐块。
@@ -50,6 +60,9 @@ markitdown requirements/作业要求.pdf
 | `index.html` | 报告源文件：封面、摘要、目录、正文、参考文献。`<main class="page">` 内按 section 组织 |
 | `styles.css` | 排版源文件：页面几何、字体、三线表、插图、公式、参考文献样式。通过 `--accent` 等 CSS 变量控制主题 |
 | `scripts/export-pdf.mjs` | PDF 导出脚本：启动 Puppeteer → 加载页面 → 注入 `body.exporting` → 回填目录页码 → 分页导出 |
+| `scripts/build-toc.mjs` | 目录自动生成：从 `.content` 扫描 h2/h3，自动更新 `.toc-list` |
+| `scripts/check-report.mjs` | 结构校验：检查 data-toc-target ↔ id 对应、图片存在、标题 id 完整性 |
+| `scripts/export-pdf-watch.mjs` | Watch 模式：监听源文件变化自动重新导出 |
 | `skills/vibe-report-editor/SKILL.md` | AI 编辑规则（Codex-style skill），定义报告结构约定和修改流程 |
 
 ### 报告结构约定
@@ -91,10 +104,14 @@ markitdown requirements/作业要求.pdf
 
 ### 排版组件
 
-- **三线表**：`figure.table-figure` > `figcaption.table-caption` + `table.three-line`
-- **插图**：图片放 `assets/`，`figure.img-figure` > `img` + `figcaption`
-- **公式**：独立公式用 `div.formula` 居中
+- **三线表**：`figure.table-figure` > `figcaption.table-caption` + `table.three-line`。表号由 CSS counter 自动生成（"表 1""表 2"……），`figcaption` 中只需写题注文字，不要手写"表 N"。
+- **插图**：图片放 `assets/`，`figure.img-figure` > `img` + `figcaption`。图号由 CSS counter 自动生成（"图 1""图 2"……），`figcaption` 中只需写题注文字，不要手写"图 N"。
+- **公式**：行内用 `$...$`，独立公式用 `$$...$$` 写在 `div.formula` 中。KaTeX 自动渲染（通过 CDN 加载）。也支持 HTML 实体 / Unicode 手写简单公式。
+- **代码块**：`pre` + `code`，等宽字体，灰色背景，自动换行。
 - **参考文献**：`ol.references`，GB/T 7714 编号制
+- **脚注**：正文中用 `<sup class="fn-ref"><a href="#fn-1">1</a></sup>` 标注，底部用 `<ol class="footnotes">`。
+- **英文摘要**：`section.abstract.abstract-en`，结构和中文摘要一致。
+- **附录**：`section.appendix` > `h2.appendix-heading`，章节编号自动用大写字母（附录 A、附录 B……）。
 - **孤行标题防护**：标题设置了 `break-after: avoid`，紧邻的段落/列表设置了 `break-before: avoid`，双向保护防止标题孤悬页底。新增章节时保持此 CSS 模式。
 
 ### AI 编辑规则

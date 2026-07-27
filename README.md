@@ -5,7 +5,7 @@
 VibeCourseReport 是一个 **AI 友好、网页优先、可导出多页 PDF 的大学课程作业报告模板**，灵感与思路来自 [vibe-resume](https://github.com/LiuMengxuan04/vibe-resume)。你不需要在 Word 里反复调封面、目录和页码；把报告维护成 `HTML + CSS`，让 AI 帮你改内容和排版，然后用脚本把网页看到的布局稳定导出成 A4 PDF。
 
 - 示例网页：打开 `index.html`
-- 示例 PDF：`export/vibe-course-report-demo.pdf`
+- 示例 PDF：运行 `npm run export:pdf` 后生成于 `export/vibe-course-report-demo.pdf`
 - AI 使用说明：`skills/vibe-report-editor/SKILL.md`
 
 ## 为什么做这个项目
@@ -26,6 +26,8 @@ VibeCourseReport 的思路是：**把网页作为报告源文件，把 AI 当作
 - **一键导出多页 A4 PDF**：Chromium 渲染 `screen` 布局，按 A4 自动分页，页脚自动加页码。
 - **避免打印错位**：不依赖手动浏览器打印，不触发不可控的 `@media print` 差异。
 - **AI 配套 Skill**：仓库内置 `vibe-report-editor`，可作为 Codex-style skill 即插即用。
+
+![预览截图](assets/preview.png)
 
 ## 快速开始
 
@@ -60,6 +62,8 @@ node scripts/export-pdf.mjs export/自定义文件名.pdf
 ```bash
 CHROME_PATH=/path/to/chrome npm run export:pdf
 ```
+
+> ⚠️ **安全提示**：Linux 环境下导出脚本会自动添加 `--no-sandbox` 参数以兼容 Docker/CI 等无头环境。该参数会禁用 Chromium 沙箱隔离，**仅用于渲染受信任的本地 HTML 内容**，切勿用来加载不可信的远程 URL。
 
 ## 推荐工作流
 
@@ -111,8 +115,7 @@ cp -R skills/vibe-report-editor ~/.codex/skills/
 .
 ├── assets/
 │   └── figure-reward-accuracy.png   # 示例插图
-├── export/
-│   └── vibe-course-report-demo.pdf  # 示例导出产物
+├── export/                    # 导出产物（被 .gitignore 忽略，运行 npm run export:pdf 后生成）
 ├── requirements/                    # 放入作业要求文件（PDF/Word 等），AI 用 markitdown 读取
 ├── skills/
 │   └── vibe-report-editor/

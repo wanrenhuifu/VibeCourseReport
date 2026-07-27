@@ -1,5 +1,6 @@
 ---
 name: vibe-report-editor
+version: 1.0.0
 description: 编辑 VibeCourseReport 网页课程报告模板（index.html / styles.css），并用 scripts/export-pdf.mjs 导出多页 A4 PDF。当用户要求撰写、修改、排版课程作业报告或导出报告 PDF 时使用。
 ---
 
@@ -32,10 +33,14 @@ description: 编辑 VibeCourseReport 网页课程报告模板（index.html / sty
 
 ## 排版组件
 
-- **三线表**：`figure.table-figure` + `table.three-line`，表题在 `figcaption.table-caption`（表 1、表 2……）。
-- **插图**：图片放 `assets/`，用 `figure.img-figure` 引用，图题在 `figcaption`（图 1、图 2……）。
-- **公式**：行内用 `<sub>/<sup>`；独立公式用 `div.formula` 居中。
+- **三线表**：`figure.table-figure` + `table.three-line`，表题在 `figcaption.table-caption`（表号由 CSS counter 自动生成，只需写题注文字，不要手写"表 N"）。
+- **插图**：图片放 `assets/`，用 `figure.img-figure` 引用，图题在 `figcaption`（图号由 CSS counter 自动生成，只需写题注文字，不要手写"图 N"）。
+- **公式**：行内用 `$...$`，独立公式用 `$$...$$` 写在 `div.formula` 中。KaTeX 自动渲染（通过 CDN 加载）。简单公式也可用 Unicode 字符手写（如 θ φ π β）。
+- **代码块**：`` ``` `` 围栏代码块或 `<pre><code>`，等宽字体，灰色背景，自动换行。
 - **参考文献**：`ol.references`，GB/T 7714 编号制（作者. 题名[文献类型]. 出处, 年, 卷(期): 页码.）。
+- **脚注**：正文用 `<sup class="fn-ref"><a href="#fn-1" id="fnref-1">1</a></sup>`，底部用 `<ol class="footnotes">`。
+- **英文摘要**：`section.abstract.abstract-en`，结构同中文摘要。
+- **附录**：`section.appendix` > `h2.appendix-heading`，编号自动用大写字母（附录 A、附录 B……）。
 - 正文段落首行缩进已由 CSS 处理，不要在文本里加全角空格缩进。
 
 ## 读取作业要求
@@ -61,17 +66,20 @@ markitdown https://example.com/assignment
    - 先检查 `requirements/` 目录：如果有作业要求文件，用 `markitdown` 转换后仔细阅读。
    - 仍不清楚的就问用户。
 2. 改 `index.html` 内容，必要时改 `styles.css`（主题色 `--accent`、字号、行距等 CSS 变量）。
-3. 运行导出验证：
-
+3. 如果新增或删除了章节，运行目录自动生成：
    ```bash
-   npm run export:pdf
+   npm run build:toc
    ```
-
-4. 检查导出日志：目录页码回填条数应与目录条目数一致。
-5. 自查清单：
+4. 运行结构和导出验证：
+   ```bash
+   npm run check        # 先检查结构完整性
+   npm run export:pdf   # 再导出 PDF
+   ```
+5. 检查导出日志：目录页码回填条数应与目录条目数一致。
+6. 自查清单：
    - [ ] 封面信息全部替换为真实内容，无 mock 占位
    - [ ] 摘要、关键词与正文一致
-   - [ ] 目录条目与正文章节一一对应
+   - [ ] 目录条目与正文章节一一对应（`npm run check` 可自动检查）
    - [ ] 图表均有编号与题注，正文中均有引用（"如图 1 所示"）
    - [ ] 参考文献格式统一、真实可查
    - [ ] PDF 分页无孤行标题、无被截断的表格/图片

@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="author" content="" />
   <title>Vibe 课程报告 · 大语言模型对齐技术综述（示例）</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📄</text></svg>" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" integrity="sha384-nB0miv6/jRmo5QMMRxtKUQ+UznQW7L6qS5aJ3LCPv+UQmflGkvJfVphZTIkSLlS" crossorigin="anonymous" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
@@ -51,10 +54,26 @@
       <p class="keywords"><strong>关键词：</strong>大语言模型；对齐；人类反馈强化学习；直接偏好优化；偏好学习</p>
     </section>
 
+    <!-- ============ 英文摘要 ============ -->
+    <section class="abstract abstract-en">
+      <h2 class="front-title">Abstract</h2>
+      <p>
+        After pre-training, large language models (LLMs) possess powerful general capabilities,
+        yet their outputs do not naturally align with human intent and values. Alignment has
+        therefore become a critical step toward the practical deployment of LLMs. This paper
+        systematically reviews the development of LLM alignment techniques, covering reinforcement
+        learning from human feedback (RLHF) and direct preference optimization (DPO). We compare
+        the two paradigms across optimization objectives, training pipelines, computational cost,
+        and stability, and discuss their applicable scenarios and limitations in light of published
+        experimental results. Finally, we outline future directions for alignment research.
+      </p>
+      <p class="keywords"><strong>Keywords:</strong> Large Language Model; Alignment; RLHF; Direct Preference Optimization; Preference Learning</p>
+    </section>
+
     <!-- ============ 目录 ============ -->
     <section class="toc">
       <h2 class="front-title">目　　录</h2>
-      <nav class="toc-list">
+                        <nav class="toc-list">
         <a class="toc-item lv1" href="#sec-1"><span class="toc-text">1　引言</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-1"></span></a>
         <a class="toc-item lv1" href="#sec-2"><span class="toc-text">2　对齐技术背景</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-2"></span></a>
         <a class="toc-item lv2" href="#sec-2-1"><span class="toc-text">2.1　对齐问题的提出</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-2-1"></span></a>
@@ -65,6 +84,7 @@
         <a class="toc-item lv2" href="#sec-3-2"><span class="toc-text">3.2　训练动态示意</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-3-2"></span></a>
         <a class="toc-item lv1" href="#sec-4"><span class="toc-text">4　讨论</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-4"></span></a>
         <a class="toc-item lv1" href="#sec-5"><span class="toc-text">5　结论</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-5"></span></a>
+        <a class="toc-item lv1" href="#sec-appendix"><span class="toc-text">补充材料</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-appendix"></span></a>
         <a class="toc-item lv1" href="#sec-ref"><span class="toc-text">参考文献</span><span class="toc-dots"></span><span class="toc-page" data-toc-target="sec-ref"></span></a>
       </nav>
       <p class="toc-hint">提示：目录页码由导出脚本在生成 PDF 时自动计算填充，网页预览中为空属正常现象。</p>
@@ -78,7 +98,7 @@
         以 GPT 系列为代表的大语言模型（Large Language Model, LLM）通过大规模语料预训练获得了
         通用的语言理解与生成能力。然而，预训练目标仅仅是“预测下一个词”，模型可能生成虚假、
         有害或不符合用户意图的内容。如何让模型的行为与人类的意图和价值观保持一致，即
-        “对齐”（Alignment）问题，成为大语言模型研究与应用中的核心议题之一。
+        “对齐”（Alignment）问题<sup class=”fn-ref”><a href=”#fn-1” id=”fnref-1”>1</a></sup>，成为大语言模型研究与应用中的核心议题之一。
       </p>
       <p>
         本文第 2 节介绍对齐技术的背景与两条主要技术路线；第 3 节从多个维度对比两类方法并给出
@@ -109,10 +129,10 @@
         RLHF 的优化目标可以形式化地表示为：
       </p>
       <div class="formula">
-        max<sub>&theta;</sub>&nbsp; E<sub>(x,y)~&pi;<sub>&theta;</sub></sub>[ r<sub>&phi;</sub>(x, y) ] &nbsp;&minus;&nbsp; &beta; &middot; D<sub>KL</sub>( &pi;<sub>&theta;</sub> &Vert; &pi;<sub>ref</sub> )
+        max<sub>θ</sub>　E<sub>(x,y)~π<sub>θ</sub></sub>[ r<sub>φ</sub>(x, y) ] 　−　 β · D<sub>KL</sub>( π<sub>θ</sub> ‖ π<sub>ref</sub> )
       </div>
       <p>
-        其中 r<sub>&phi;</sub>(x,&nbsp;y) 为奖励模型打分，&beta; 控制与参考模型 &pi;<sub>ref</sub> 的偏离程度。
+        其中 r<sub>φ</sub>(x, y) 为奖励模型打分，β 控制与参考模型 π<sub>ref</sub> 的偏离程度。
       </p>
 
       <h3 id="sec-2-3">2.3　直接偏好优化（DPO）</h3>
@@ -131,7 +151,7 @@
       </p>
 
       <figure class="table-figure">
-        <figcaption class="table-caption">表 1　RLHF 与 DPO 方法对比</figcaption>
+        <figcaption class="table-caption">RLHF 与 DPO 方法对比</figcaption>
         <table class="three-line">
           <thead>
             <tr><th>对比维度</th><th>RLHF</th><th>DPO</th></tr>
@@ -155,7 +175,7 @@
 
       <figure class="img-figure">
         <img src="assets/figure-reward-accuracy.png" alt="RLHF 与 DPO 训练过程奖励准确率对比示意图" />
-        <figcaption>图 1　RLHF 与 DPO 训练过程奖励准确率对比（模拟数据，仅供演示）</figcaption>
+        <figcaption>RLHF 与 DPO 训练过程奖励准确率对比（模拟数据，仅供演示）</figcaption>
       </figure>
 
       <h2 id="sec-4">4　讨论</h2>
@@ -174,6 +194,12 @@
         Oversight）可能成为对齐技术进一步发展的重要方向。
       </p>
 
+      <!-- ===== 附录（可选） ===== -->
+      <section class="appendix">
+        <h2 id="sec-appendix" class="appendix-heading">补充材料</h2>
+        <p>附录内容可根据需要添加，如代码清单、原始数据、调查问卷等。附录章节由 CSS counter 自动编号（附录 A、附录 B……）。</p>
+      </section>
+
       <h2 id="sec-ref" class="ref-title">参考文献</h2>
       <ol class="references">
         <li>OUYANG L, WU J, JIANG X, et al. Training language models to follow instructions with human feedback[J]. Advances in Neural Information Processing Systems, 2022, 35: 27730-27744.</li>
@@ -184,8 +210,27 @@
         <li>周志华. 机器学习[M]. 北京: 清华大学出版社, 2016.</li>
       </ol>
 
+      <!-- 脚注 -->
+      <ol class="footnotes">
+        <li id="fn-1"><a href="#fnref-1">↩</a> 对齐（Alignment）又称值对齐（Value Alignment），指使 AI 系统的行为与人类意图和价值观保持一致。参见 Russell (2019) <em>Human Compatible</em>。</li>
+      </ol>
+
     </section>
   </main>
+
+  <!-- KaTeX 自动渲染：寻找 .formula 中 $$...$$ 包裹的 LaTeX 公式 -->
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js" integrity="sha384-7VlENH7Jk38sJMHUA0BQJxKlI1Be0PwWLx5lPGiFQFlAljlnmbD3K2gXv0DxR63" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" integrity="sha384-vQXJsdF6Eb/3JQeV7eh4PzY/ukEHrqGJdjKz7IAoKQKOUjWkO8YvIBE7v32BjNq" crossorigin="anonymous"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      renderMathInElement(document.body, {
+        delimiters: [
+          { left: "$$", right: "$$", display: true },
+          { left: "$", right: "$", display: false },
+        ],
+      });
+    });
+  </script>
 
 </body>
 </html>

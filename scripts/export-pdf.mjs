@@ -20,7 +20,7 @@
  */
 
 import { existsSync, mkdirSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import puppeteer from 'puppeteer-core';
 
@@ -72,23 +72,26 @@ function findChrome() {
   // LOCALAPPDATA 覆盖无管理员权限的每用户 Chrome 安装（新版 Windows 默认方式）
   const { PROGRAMFILES, 'PROGRAMFILES(X86)': PROGRAMFILES_X86, LOCALAPPDATA } = process.env;
   if (PROGRAMFILES) candidates.push(
-    `${PROGRAMFILES}\\Google\\Chrome\\Application\\chrome.exe`,
-    `${PROGRAMFILES}\\Microsoft\\Edge\\Application\\msedge.exe`,
+    join(PROGRAMFILES, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    join(PROGRAMFILES, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
   );
   if (PROGRAMFILES_X86) candidates.push(
-    `${PROGRAMFILES_X86}\\Google\\Chrome\\Application\\chrome.exe`,
-    `${PROGRAMFILES_X86}\\Microsoft\\Edge\\Application\\msedge.exe`,
+    join(PROGRAMFILES_X86, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    join(PROGRAMFILES_X86, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
   );
   if (LOCALAPPDATA) candidates.push(
-    `${LOCALAPPDATA}\\Google\\Chrome\\Application\\chrome.exe`,
+    join(LOCALAPPDATA, 'Google', 'Chrome', 'Application', 'chrome.exe'),
   );
   for (const p of candidates) if (existsSync(p)) return p;
   throw new Error('未找到 Chrome / Chromium，请设置环境变量 CHROME_PATH 指向浏览器可执行文件。');
 }
 
 let browser;
+let hasWarnings = false;
 try {
-  // --no-sandbox 和 --disable-dev-shm-usage 仅 Linux 环境（Docker / CI）需要
+  // --no-sandbox 和 --disable-dev-shm-usage 仅 Linux 环境（Docker / CI）需要。
+  // ⚠ 安全提示：--no-sandbox 会禁用 Chromium 沙箱隔离，仅用于渲染受信任的本地 HTML；
+  // 切勿用来加载不可信的远程 URL。
   const args = ['--force-color-profile=srgb'];
   if (process.platform === 'linux') {
     args.push('--no-sandbox', '--disable-dev-shm-usage');
@@ -102,12 +105,69 @@ try {
 
   const page = await browser.newPage();
   await page.emulateMediaType('screen');
-  await page.goto(pathToFileURL(htmlPath).href, { waitUntil: 'networkidle0' });
+
+  // 设置页面加载超时：避免因挂起的网络请求（如不存在的远程字体 CDN）导致无限等待
+  await page.goto(pathToFileURL(htmlPath).href, { waitUntil: 'networkidle0', timeout: 30_000 });
 
   // 等待字体就绪（evaluate 不带 Handle 会等待返回的 Promise 在浏览器内 resolve）
   await page.evaluate(() => document.fonts.ready);
 
-  // 设置导出模式 + 回填目录页码 + 读取页脚字体（合并为一次浏览器往返）
+  // ---------- 读取页面元数据 ----------
+  const pageMeta = await page.evaluate(() => {
+    const title = document.title || '';
+    const authorEl = document.querySelector('meta[name="author"]');
+    const author = authorEl ? authorEl.getAttribute('content') || '' : '';
+    return { title, author };
+  });
+  if (pageMeta.title) {
+    console.log(`报告标题：${pageMeta.title}`);
+    // 将页面标题注入为 PDF 文档标题（通过 <title> 元素，Chromium 读取后写入 PDF metadata）
+    await page.evaluate((t) => { document.title = t; }, pageMeta.title);
+  }
+
+  // ---------- CJK 字体检测 ----------
+  const fontCheck = await page.evaluate(() => {
+    const testEl = document.createElement('span');
+    testEl.textContent = '中文测试';
+    testEl.style.cssText = 'position:absolute;visibility:hidden;';
+    document.body.appendChild(testEl);
+    const resolvedFont = getComputedStyle(testEl).fontFamily;
+    document.body.removeChild(testEl);
+    // 检测 resolved font-family 是否包含已知 CJK 字体标识
+    const cjkPattern = /(Noto|Source Han|Songti|SimSun|SimHei|PingFang|Microsoft YaHei|Microsoft JhengHei|WenQuanYi|CJK|Han|Mincho|Gothic|FangSong|KaiTi|Heiti|Ming)/i;
+    const hasCjk = cjkPattern.test(resolvedFont);
+    return { resolvedFont, hasCjk };
+  });
+  if (!fontCheck.hasCjk) {
+    console.warn(
+      `⚠ 警告：检测到中文可能未使用 CJK 字体渲染（当前字体: ${fontCheck.resolvedFont}）。\n` +
+      `   无头 Linux / Docker 环境需安装 CJK 字体包，否则 PDF 中文会显示为方块（tofu）。\n` +
+      `   Debian/Ubuntu: sudo apt install fonts-noto-cjk\n` +
+      `   RHEL/Fedora:   sudo yum install google-noto-cjk-fonts`
+    );
+    hasWarnings = true;
+  }
+
+  // ---------- 缺失资源预检 ----------
+  const missingAssets = await page.evaluate(() => {
+    const missing = [];
+    // 检查所有图片是否成功加载
+    for (const img of document.images) {
+      if (img.naturalWidth === 0 && img.naturalHeight === 0) {
+        missing.push(img.getAttribute('src') || img.currentSrc || '(未知来源)');
+      }
+    }
+    return missing;
+  });
+  if (missingAssets.length > 0) {
+    console.warn(
+      `⚠ 警告：${missingAssets.length} 个图片资源加载失败，PDF 中对应位置将为空白：\n` +
+      `   ${missingAssets.join('\n   ')}`
+    );
+    hasWarnings = true;
+  }
+
+  // ---------- 设置导出模式 + 回填目录页码 + 读取页脚字体 ----------
   const tocFilled = await page.evaluate((contentHeightPx) => {
     // 设置 CSS 变量，供 styles.css 中 body.exporting 规则使用
     document.documentElement.style.setProperty('--content-height', contentHeightPx + 'px');
@@ -149,17 +209,19 @@ try {
       `⚠ 警告：${tocFilled.missed.length} 个目录目标未找到，对应页码留空：` +
       tocFilled.missed.map(id => '#' + id).join(', ')
     );
+    hasWarnings = true;
   }
   if (tocFilled.overflowing.length) {
     console.warn(
       `⚠ 警告：${tocFilled.overflowing.join('、')}内容超过一页，PDF 中已被截断——请精简后重新导出`
     );
+    hasWarnings = true;
   }
 
-  // --sans 的值带双引号（如 "Noto Sans CJK SC"），原样插入双引号包裹的 style 属性
-  // 会被 HTML 解析器在第一个内部引号处截断、丢弃整条 font-family 声明；
-  // 换成 CSS 同样合法的单引号，页脚字体才能真正与 --sans 一致
-  const footerFont = tocFilled.footerFont.replace(/"/g, "'");
+  // 构造页脚样式。--sans 的值可能包含双引号（如 "Noto Sans CJK SC"），
+  // 插入 HTML style 属性时内部双引号会截断属性值。
+  // 用 JSON.stringify 对完整 style 值做 JS 字符串转义，保证任何引号都被正确编码。
+  const footerStyle = `width:100%;text-align:center;font-size:9px;color:#666;font-family:${tocFilled.footerFont}`;
 
   await page.pdf({
     path: output,
@@ -175,13 +237,18 @@ try {
     displayHeaderFooter: true,
     headerTemplate: '<div></div>',
     footerTemplate: `
-      <div style="width:100%;text-align:center;font-size:9px;color:#666;
-                  font-family:${footerFont};">
+      <div style=${JSON.stringify(footerStyle)}>
         <span class="pageNumber"></span> / <span class="totalPages"></span>
       </div>`,
+    // 生成 PDF 书签/大纲，阅读器侧边栏可跳转章节
+    outline: true,
+    tagged: true,
   });
 
   console.log(`PDF 已导出：${output}`);
+  if (hasWarnings) {
+    console.log('（导出时有警告，请检查上述 ⚠ 信息）');
+  }
 } finally {
   if (browser) await browser.close();
 }

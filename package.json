@@ -5,11 +5,18 @@
   "type": "module",
   "private": true,
   "scripts": {
+    "dev": "vite --port 4173",
     "preview": "vite --port 4173",
-    "export:pdf": "node scripts/export-pdf.mjs"
+    "export:pdf": "node scripts/export-pdf.mjs",
+    "export:pdf:watch": "node scripts/export-pdf-watch.mjs",
+    "build:toc": "node scripts/build-toc.mjs",
+    "check": "node scripts/check-report.mjs"
+  },
+  "engines": {
+    "node": ">=18"
   },
   "devDependencies": {
-    "puppeteer-core": "^23.11.1",
-    "vite": "^6.0.7"
+    "puppeteer-core": "~23.11.1",
+    "vite": "~6.0.7"
   }
 }
