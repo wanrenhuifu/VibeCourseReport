@@ -38,7 +38,7 @@ npm run check
 
 `markitdown` 是外部 Python 工具（`pip install markitdown`），**不在** npm 依赖中。
 
-仓库没有单元测试或 lint——改动的验证方式就是导出一次 PDF 并看日志：`目录页码已回填 N 条` 的 N 应与 `index.html` 中目录条目数一致，有 `⚠ 警告` 行说明存在找不到目标的 `data-toc-target`。
+仓库没有单元测试或 lint——改动的验证方式就是导出一次 PDF 并看日志：`目录页码已回填 N 条` 的 N 应与 `index.html` 中目录条目数一致，有 `⚠ 警告` 行说明存在找不到目标的 `data-toc-target`。有警告时导出脚本以退出码 1 结束，CI 的 Export PDF 步骤会因此失败——这是有意设计，防止放行截断/损坏的 PDF。
 
 ## Architecture
 

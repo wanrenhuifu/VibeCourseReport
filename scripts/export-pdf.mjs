@@ -58,11 +58,12 @@ if (!existsSync(htmlPath)) {
 function findChrome() {
   if (process.env.CHROME_PATH && existsSync(process.env.CHROME_PATH)) return process.env.CHROME_PATH;
   const candidates = [
-    // Linux
-    '/usr/bin/chromium',
-    '/usr/bin/chromium-browser',
+    // Linux：google-chrome 优先——Ubuntu 上 /usr/bin/chromium(-browser) 常是
+    // snap 过渡包的桩脚本，existsSync 为真但启动即失败（无 snapd 环境，如 CI）
     '/usr/bin/google-chrome',
     '/usr/bin/google-chrome-stable',
+    '/usr/bin/chromium',
+    '/usr/bin/chromium-browser',
     // macOS
     '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
     '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
@@ -247,7 +248,9 @@ try {
 
   console.log(`PDF 已导出：${output}`);
   if (hasWarnings) {
-    console.log('（导出时有警告，请检查上述 ⚠ 信息）');
+    console.error('（导出时有警告，请检查上述 ⚠ 信息）');
+    // 非零退出码让 CI 的 Export PDF 步骤失败，避免放行截断/损坏的 PDF
+    process.exitCode = 1;
   }
 } finally {
   if (browser) await browser.close();

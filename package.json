@@ -13,10 +13,10 @@
     "check": "node scripts/check-report.mjs"
   },
   "engines": {
-    "node": ">=18"
+    "node": "^18.0.0 || ^20.0.0 || >=22.0.0"
   },
   "devDependencies": {
-    "puppeteer-core": "~23.11.1",
-    "vite": "~6.0.7"
+    "puppeteer-core": "^23.11.1",
+    "vite": "^6.0.7"
   }
 }

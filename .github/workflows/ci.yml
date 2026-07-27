@@ -10,6 +10,7 @@ on:
       - 'assets/**'
       - 'package.json'
       - 'package-lock.json'
+      - '.gitattributes'
       - '.github/workflows/ci.yml'
   pull_request:
     branches: [main]
@@ -31,18 +32,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Chromium and CJK fonts
+      # 浏览器用 runner 镜像预装的 Google Chrome（/usr/bin/google-chrome，
+      # export-pdf.mjs 的 findChrome() 会自动探测），不装 chromium-browser——
+      # Ubuntu 上它是 snap 过渡包，Actions runner 没有 snapd，装不上。
+      - name: Install CJK fonts
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq chromium-browser fonts-noto-cjk
+          sudo apt-get install -y -qq fonts-noto-cjk
 
       - name: Run structure check
         run: npm run check
 
       - name: Export PDF
         run: npm run export:pdf
-        env:
-          CHROME_PATH: /usr/bin/chromium-browser
 
       - name: Upload PDF artifact
         uses: actions/upload-artifact@v4
