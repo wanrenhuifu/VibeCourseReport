@@ -22,7 +22,7 @@ description: 编辑 VibeCourseReport 网页课程报告模板（index.html / sty
 
 | 区块 | 标签 | 说明 |
 | --- | --- | --- |
-| 封面 | `section.cover` | 学校、课程、题目、姓名学号、指导教师、日期 |
+| 封面 | `section.cover` | 校徽占位（`.cover-emblem`，正方形）、学校、课程、题目、姓名学号、指导教师、日期 |
 | 摘要 | `section.abstract` | 摘要正文 + `p.keywords` 关键词 |
 | 目录 | `section.toc` | `a.toc-item.lv1/.lv2`，页码留空 |
 | 正文 | `section.content` | `h2` 章 / `h3` 节，参考文献 `h2#sec-ref` + `ol.references` |
@@ -34,6 +34,7 @@ description: 编辑 VibeCourseReport 网页课程报告模板（index.html / sty
 ## 排版组件
 
 - **三线表**：`figure.table-figure` + `table.three-line`，表题在 `figcaption.table-caption`（表号由 CSS counter 自动生成，只需写题注文字，不要手写"表 N"）。
+- **校徽**：封面顶部 `div.cover-emblem > img` 是正方形预留位（默认占位图 `assets/school-emblem.svg`）。替换真实校徽时从 [universitylogos.top](https://universitylogos.top/)（免费高校徽标库，PNG/SVG 透明底，无需注册）下载对应学校徽标放入 `assets/`，把 `src` 改为新文件名即可（`object-fit: contain` 已保证非正方形图也不变形）。校徽图案不可编造手绘；找不到就请用户自行提供，并仅限本校课程报告等正当用途。
 - **插图**：图片放 `assets/`，用 `figure.img-figure` 引用，图题在 `figcaption`（图号由 CSS counter 自动生成，只需写题注文字，不要手写"图 N"）。
 - **公式**：行内用 `$...$`，独立公式用 `$$...$$` 写在 `div.formula` 中。KaTeX 自动渲染（通过 CDN 加载）。简单公式也可用 Unicode 字符手写（如 θ φ π β）。
 - **代码块**：`` ``` `` 围栏代码块或 `<pre><code>`，等宽字体，灰色背景，自动换行。

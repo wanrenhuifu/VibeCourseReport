@@ -69,7 +69,7 @@ markitdown requirements/作业要求.pdf
 
 `index.html` 中 `<main class="page">` 内按顺序包含：
 
-- `section.cover` — 封面（学校、课程、题目、姓名学号、指导教师、日期）
+- `section.cover` — 封面（校徽占位 `.cover-emblem`、学校、课程、题目、姓名学号、指导教师、日期）
 - `section.abstract` — 摘要正文 + `p.keywords`
 - `section.toc` — 目录（`a.toc-item.lv1/.lv2`，页码由导出脚本自动回填，保持留空）
 - `section.content` — 正文（`h2` 章 / `h3` 节 / 三线表 / 插图 / 公式 / 参考文献 `h2#sec-ref` + `ol.references`）

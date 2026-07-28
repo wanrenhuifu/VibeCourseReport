@@ -114,6 +114,7 @@ cp -R skills/vibe-report-editor ~/.codex/skills/
 ```
 .
 ├── assets/
+│   ├── school-emblem.svg            # 封面校徽占位图（替换为真实校徽）
 │   └── figure-reward-accuracy.png   # 示例插图
 ├── export/                    # 导出产物（被 .gitignore 忽略，运行 npm run export:pdf 后生成）
 ├── requirements/                    # 放入作业要求文件（PDF/Word 等），AI 用 markitdown 读取
@@ -134,7 +135,7 @@ cp -R skills/vibe-report-editor ~/.codex/skills/
 
 ## 示例内容声明
 
-仓库中的报告内容是模板演示用 mock 数据：学校、姓名、学号、教师均为虚构占位；示例图由脚本生成的模拟数据绘制；参考文献为真实公开文献，仅用于演示 GB/T 7714 排版格式。请在提交前全部替换为真实内容，并遵守课程关于 AI 工具使用的学术诚信要求。
+仓库中的报告内容是模板演示用 mock 数据：学校、姓名、学号、教师均为虚构占位；示例图由脚本生成的模拟数据绘制；参考文献为真实公开文献，仅用于演示 GB/T 7714 排版格式。封面上的校徽是正方形占位图，可从免费高校徽标库 [universitylogos.top](https://universitylogos.top/) 下载透明底 PNG/SVG 放入 `assets/`，再修改 `index.html` 中 `.cover-emblem > img` 的 `src` 即可替换（仅限本校课程报告等正当用途）。请在提交前全部替换为真实内容，并遵守课程关于 AI 工具使用的学术诚信要求。
 
 ## 致谢
 
