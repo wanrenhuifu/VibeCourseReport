@@ -29,6 +29,8 @@ VibeCourseReport 的思路是：**把网页作为报告源文件，把 AI 当作
 
 ![预览截图](assets/preview.png)
 
+> 截图与模板不同步时，运行 `npm run screenshot` 重新生成（输出到 `assets/preview.png`）。
+
 ## 快速开始
 
 安装依赖（需要 Node.js ≥ 18 和本机 Chrome / Chromium）：

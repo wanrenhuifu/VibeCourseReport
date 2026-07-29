@@ -32,6 +32,9 @@ npm run build:toc
 
 # 结构校验（检查目录对应、图片存在、标题 id）
 npm run check
+
+# 重新生成 README 预览截图（assets/preview.png，模板内容/样式变更后重跑以保持同步）
+npm run screenshot
 ```
 
 如果找不到浏览器，设置 `CHROME_PATH` 环境变量指向 Chrome/Chromium 可执行文件。注意依赖的是 `puppeteer-core`（不自带浏览器，必须用系统 Chrome/Chromium）；在无头 Linux / Docker 环境还需安装 CJK 字体包（如 `fonts-noto-cjk`），否则中文渲染为豆腐块。

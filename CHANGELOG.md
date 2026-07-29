@@ -1,5 +1,14 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- 封面校徽正方形预留位（`.cover-emblem`）与占位图 `assets/school-emblem.svg`；替换说明见 README / SKILL.md，校徽可从 [universitylogos.top](https://universitylogos.top/) 获取
+- `npm run screenshot`：重新生成 README 预览截图 `assets/preview.png`，避免模板变更后截图过时
+
+### Fixed
+- 导出脚本 CJK 字体检测恒为假阳性的问题：改用探针文本渲染宽度对比，无头 Linux / Docker 缺 CJK 字体时豆腐块（tofu）警告能真正触发
+
 ## [1.0.0] — 2026-07-27
 
 ### Added
