@@ -127,21 +127,36 @@ try {
   }
 
   // ---------- CJK 字体检测 ----------
+  // 两个常见判据都不灵（已在 headless Chrome 实测排除）：
+  // 1. getComputedStyle().fontFamily 返回的是 CSS **声明**的字体列表（必含
+  //    Noto/SimSun 等名字），不是渲染时实际命中的字体，字符串匹配恒为假阳性；
+  // 2. document.fonts.check() 对**不存在**的字体也返回 true，对不覆盖给定文本的
+  //    字体同样返回 true，无法区分"已安装且能渲染"。
+  // 可靠判据——宽度对比：同一段混合探针文本渲染两次，一次用页面字体栈，一次强制
+  // 走必然不存在的字体（Chromium 回落到 last-resort 字体，每个字符都是等宽方块，
+  // 即 tofu 的真实形态）。两宽度一致 ⇒ 页面字体栈没命中任何能渲染这些字形的字体，
+  // PDF 中文必为方块。探针混入拉丁字母是因为真实字体中拉丁字形宽度必然不同于
+  // 等宽方块，防止"CJK 字形恰为 1em 宽、总宽与方块串巧合一致"的漏报。
   const fontCheck = await page.evaluate(() => {
-    const testEl = document.createElement('span');
-    testEl.textContent = '中文测试';
-    testEl.style.cssText = 'position:absolute;visibility:hidden;';
-    document.body.appendChild(testEl);
-    const resolvedFont = getComputedStyle(testEl).fontFamily;
-    document.body.removeChild(testEl);
-    // 检测 resolved font-family 是否包含已知 CJK 字体标识
-    const cjkPattern = /(Noto|Source Han|Songti|SimSun|SimHei|PingFang|Microsoft YaHei|Microsoft JhengHei|WenQuanYi|CJK|Han|Mincho|Gothic|FangSong|KaiTi|Heiti|Ming)/i;
-    const hasCjk = cjkPattern.test(resolvedFont);
-    return { resolvedFont, hasCjk };
+    const pageStack = getComputedStyle(document.body).fontFamily;
+    const probeText = '中A文B测C试D';
+    const measure = (fontFamily) => {
+      const s = document.createElement('span');
+      s.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:72px;';
+      s.style.fontFamily = fontFamily;
+      s.textContent = probeText;
+      document.body.appendChild(s);
+      const w = s.getBoundingClientRect().width;
+      s.remove();
+      return w;
+    };
+    const tofuWidth = measure('"VibeReportLastResortProbe_NoSuchFont"');
+    const pageWidth = measure(pageStack);
+    return { pageStack, tofuWidth, pageWidth, hasCjk: Math.abs(pageWidth - tofuWidth) > 0.01 };
   });
   if (!fontCheck.hasCjk) {
     console.warn(
-      `⚠ 警告：检测到中文可能未使用 CJK 字体渲染（当前字体: ${fontCheck.resolvedFont}）。\n` +
+      `⚠ 警告：页面字体栈无法渲染 CJK 字形（声明字体: ${fontCheck.pageStack}）。\n` +
       `   无头 Linux / Docker 环境需安装 CJK 字体包，否则 PDF 中文会显示为方块（tofu）。\n` +
       `   Debian/Ubuntu: sudo apt install fonts-noto-cjk\n` +
       `   RHEL/Fedora:   sudo yum install google-noto-cjk-fonts`
