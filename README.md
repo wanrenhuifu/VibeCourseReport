@@ -29,7 +29,7 @@ VibeCourseReport 的思路是：**把网页作为报告源文件，把 AI 当作
 
 ![预览截图](assets/preview.png)
 
-> 截图与模板不同步时，运行 `npm run screenshot` 重新生成（输出到 `assets/preview.png`）。
+> 截图与模板不同步时，运行 `npm run screenshot` 重新生成（输出到 `assets/preview.png`）；`npm run check` 会自动校验截图是否过期。
 
 ## 快速开始
 
@@ -111,20 +111,29 @@ cp -R skills/vibe-report-editor ~/.codex/skills/
 | 左右边距 | 28mm | 对应 CSS `--margin-x` |
 | 纸张宽 | 793.7008px | A4 210mm @96dpi 精确值（参与目录页码测量，勿取整） |
 
+> 预览截图脚本 `scripts/update-preview.mjs` 的视口宽度运行时从 CSS 读取（`--sheet-w` + 2×`--margin-x`），不写死。
+
 ## 项目结构
 
 ```
 .
 ├── assets/
 │   ├── school-emblem.svg            # 封面校徽占位图（替换为真实校徽）
-│   └── figure-reward-accuracy.png   # 示例插图
+│   ├── figure-reward-accuracy.png   # 示例插图
+│   ├── preview.png                  # README 预览截图（npm run screenshot 生成）
+│   └── preview.sources.json         # 预览截图同步标记（npm run check 据此校验截图是否过期）
 ├── export/                    # 导出产物（被 .gitignore 忽略，运行 npm run export:pdf 后生成）
 ├── requirements/                    # 放入作业要求文件（PDF/Word 等），AI 用 markitdown 读取
 ├── skills/
 │   └── vibe-report-editor/
 │       └── SKILL.md                 # AI 编辑规则
 ├── scripts/
-│   └── export-pdf.mjs               # 多页 A4 导出脚本
+│   ├── export-pdf.mjs               # 多页 A4 导出脚本
+│   ├── export-pdf-watch.mjs         # 导出 Watch 模式（源文件变化自动重新导出）
+│   ├── update-preview.mjs           # README 预览截图生成（含 CJK 字体 / 缺失资源 / 构图校验）
+│   ├── update-preview-watch.mjs     # 截图 Watch 模式（源文件变化自动重新生成截图）
+│   └── lib/
+│       └── chrome.mjs               # 共享 Chromium 探测与启动（export-pdf 与 update-preview 共用）
 ├── index.html                       # 报告源文件（内容）
 ├── styles.css                       # 报告源文件（样式）
 ├── package.json

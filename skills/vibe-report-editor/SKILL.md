@@ -73,17 +73,22 @@ markitdown https://example.com/assignment
    ```
 4. 运行结构和导出验证：
    ```bash
-   npm run check        # 先检查结构完整性
+   npm run check        # 先检查结构完整性（含 preview.png 是否过期）
    npm run export:pdf   # 再导出 PDF
    ```
 5. 检查导出日志：目录页码回填条数应与目录条目数一致。
-6. 自查清单：
+6. 如果改动了封面或任何样式，重跑预览截图（`npm run check` 会强制校验截图未过期，漏跑会报错）：
+   ```bash
+   npm run screenshot
+   ```
+7. 自查清单：
    - [ ] 封面信息全部替换为真实内容，无 mock 占位
    - [ ] 摘要、关键词与正文一致
    - [ ] 目录条目与正文章节一一对应（`npm run check` 可自动检查）
    - [ ] 图表均有编号与题注，正文中均有引用（"如图 1 所示"）
    - [ ] 参考文献格式统一、真实可查
    - [ ] PDF 分页无孤行标题、无被截断的表格/图片
+   - [ ] README 预览截图 preview.png 已重新生成（`npm run check` 会强制校验）
 
 ## 常见问题
 

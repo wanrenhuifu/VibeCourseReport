@@ -12,6 +12,7 @@
  *   npm run check                              # 同上（通过 package.json scripts）
  */
 
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -117,6 +118,53 @@ if (contentH2H3.length > 0) {
   } else {
     warn(`目录 ${tocTargets.length} 条 ≠ 正文标题 ${headingTotal} 个（${h2Count} h2 + ${h3Count} h3）——考虑运行 npm run build:toc 重新生成目录`);
   }
+}
+
+// --- 5. README 预览截图与同步标记 ---
+// 防止"改了 index.html / styles.css 却忘了重跑 npm run screenshot"导致的过期 preview.png
+// 被提交上去（CI 的 npm run check 会因此失败）。判定依据是 update-preview.mjs 写入的
+// assets/preview.sources.json 里的源文件指纹，与当前源文件逐一比对，跨平台可靠。
+console.log('\n[5] 预览截图（assets/preview.png）');
+const previewPath = resolve(ROOT, 'assets/preview.png');
+const manifestPath = resolve(ROOT, 'assets/preview.sources.json');
+
+if (!existsSync(previewPath)) {
+  err('assets/preview.png 不存在（README 顶部预览图引用它）——请运行 npm run screenshot 生成');
+} else {
+  ok('assets/preview.png 存在');
+}
+
+if (existsSync(manifestPath)) {
+  let manifest;
+  try {
+    manifest = JSON.parse(readFileSync(manifestPath, 'utf-8'));
+  } catch {
+    err('assets/preview.sources.json 无法解析（JSON 损坏）——请重新运行 npm run screenshot');
+    manifest = null;
+  }
+  if (manifest) {
+    if (!manifest.sources || typeof manifest.sources !== 'object') {
+      err('assets/preview.sources.json 格式无效（缺少 sources 字段）——请重新运行 npm run screenshot');
+    } else {
+      let stale = false;
+      for (const [file, recordedHash] of Object.entries(manifest.sources)) {
+        const abs = resolve(ROOT, file);
+        if (!existsSync(abs)) {
+          err(`同步标记引用的源文件不存在：${file}`);
+          stale = true;
+          continue;
+        }
+        const current = createHash('sha256').update(readFileSync(abs)).digest('hex');
+        if (current !== recordedHash) {
+          err(`preview.png 已过期：${file} 已变更但截图未重新生成——请运行 npm run screenshot`);
+          stale = true;
+        }
+      }
+      if (!stale) ok('preview.png 与源文件同步（assets/preview.sources.json）');
+    }
+  }
+} else if (existsSync(previewPath)) {
+  err('缺少 assets/preview.sources.json（截图同步标记）——请运行 npm run screenshot 重新生成');
 }
 
 // --- 汇总 ---

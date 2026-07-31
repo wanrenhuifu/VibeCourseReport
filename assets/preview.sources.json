@@ -1,0 +1,8 @@
+{
+  "sources": {
+    "index.html": "b5c9bf1209e7261e9e58e04a01af27274aa6365c757c70179447d0addfc4e8fb",
+    "styles.css": "c71093478ab5422e05bb11531bb3b3ee6e12f371a0effe11044c97b0f11f1dfb",
+    "assets/school-emblem.svg": "caeacb39c05034e2433f4c74e28c96fba4725acee69f935b644469c054616403",
+    "scripts/update-preview.mjs": "ef5c5f23db58309844aa2e805ea617836d43ebc82b96ff3ce78cf0c23d21f436"
+  }
+}

@@ -11,7 +11,8 @@
     "export:pdf:watch": "node scripts/export-pdf-watch.mjs",
     "build:toc": "node scripts/build-toc.mjs",
     "check": "node scripts/check-report.mjs",
-    "screenshot": "node scripts/update-preview.mjs"
+    "screenshot": "node scripts/update-preview.mjs",
+    "screenshot:watch": "node scripts/update-preview-watch.mjs"
   },
   "engines": {
     "node": "^18.0.0 || ^20.0.0 || >=22.0.0"

@@ -30,11 +30,14 @@ npm run export:pdf:watch
 # 自动生成目录（从正文 h2/h3 扫描，更新 .toc-list）
 npm run build:toc
 
-# 结构校验（检查目录对应、图片存在、标题 id）
+# 结构校验（检查目录对应、图片存在、标题 id、preview.png 是否过期）
 npm run check
 
 # 重新生成 README 预览截图（assets/preview.png，模板内容/样式变更后重跑以保持同步）
 npm run screenshot
+
+# Watch 模式：监听源文件变化自动重新生成预览截图
+npm run screenshot:watch
 ```
 
 如果找不到浏览器，设置 `CHROME_PATH` 环境变量指向 Chrome/Chromium 可执行文件。注意依赖的是 `puppeteer-core`（不自带浏览器，必须用系统 Chrome/Chromium）；在无头 Linux / Docker 环境还需安装 CJK 字体包（如 `fonts-noto-cjk`），否则中文渲染为豆腐块。
@@ -64,8 +67,11 @@ markitdown requirements/作业要求.pdf
 | `styles.css` | 排版源文件：页面几何、字体、三线表、插图、公式、参考文献样式。通过 `--accent` 等 CSS 变量控制主题 |
 | `scripts/export-pdf.mjs` | PDF 导出脚本：启动 Puppeteer → 加载页面 → 注入 `body.exporting` → 回填目录页码 → 分页导出 |
 | `scripts/build-toc.mjs` | 目录自动生成：从 `.content` 扫描 h2/h3，自动更新 `.toc-list` |
-| `scripts/check-report.mjs` | 结构校验：检查 data-toc-target ↔ id 对应、图片存在、标题 id 完整性 |
+| `scripts/check-report.mjs` | 结构校验：检查 data-toc-target ↔ id 对应、图片存在、标题 id 完整性、preview.png 是否过期（比对 `assets/preview.sources.json` 里的源文件指纹） |
 | `scripts/export-pdf-watch.mjs` | Watch 模式：监听源文件变化自动重新导出 |
+| `scripts/update-preview.mjs` | README 预览截图脚本：渲染 index.html 封面区域到 `assets/preview.png`，内置 CJK 字体 / 缺失资源 / 封面构图校验（有告警即退出码 1），成功后维护 `assets/preview.sources.json` 同步标记 |
+| `scripts/update-preview-watch.mjs` | 截图 Watch 模式：监听源文件变化自动重新生成 preview.png |
+| `scripts/lib/chrome.mjs` | 共享 Chromium 探测与启动逻辑（`findChrome` / `launchChrome`，export-pdf 与 update-preview 共用，浏览器相关修复只改这一处） |
 | `skills/vibe-report-editor/SKILL.md` | AI 编辑规则（Codex-style skill），定义报告结构约定和修改流程 |
 
 ### 报告结构约定
@@ -105,6 +111,8 @@ markitdown requirements/作业要求.pdf
 
 所有 px 值都是 mm×96/25.4 的**精确换算，不要取整**：`--sheet-w` 与 `--margin-x` 决定目录页码的测量宽度（`--content-w` = 582.0472px），必须与 PDF 实际分页宽度（154mm）一致，否则长文档目录页码会 ±1 页。
 
+`scripts/update-preview.mjs` 的截图视口宽度**不在脚本里写死**：运行时从页面计算样式读取 `--sheet-w` + 2×`--margin-x`（宽 = 纸张宽 + 两侧灰底边距），与 styles.css 自动同步，无需在上表之外维护第三处副本。
+
 ### 排版组件
 
 - **三线表**：`figure.table-figure` > `figcaption.table-caption` + `table.three-line`。表号由 CSS counter 自动生成（"表 1""表 2"……），`figcaption` 中只需写题注文字，不要手写"表 N"。
@@ -124,3 +132,4 @@ markitdown requirements/作业要求.pdf
 - 不编造内容，参考文献必须真实可查
 - 目录页码留空，由导出脚本自动回填
 - 页面几何（CSS 变量 ↔ 脚本 mm 值）必须同步
+- 改动封面 / 样式后重跑 `npm run screenshot` 重新生成 README 预览截图（`npm run check` 依据 `assets/preview.sources.json` 强制校验截图未过期，漏跑会报错）

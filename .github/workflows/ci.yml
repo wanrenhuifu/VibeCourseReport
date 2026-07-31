@@ -43,6 +43,13 @@ jobs:
       - name: Run structure check
         run: npm run check
 
+      # 重新生成预览截图，验证截图管线在 CI 中可用（字体齐全 → 无 tofu 告警、资源齐全 →
+      # 无缺失资源告警、退出码 0）。preview.png 与源文件的"同步性"已由上面的 npm run check
+      # 依据 assets/preview.sources.json 强制校验（源文件变更后未重跑截图会使 check 失败），
+      # 这里不再做像素级比对——不同平台的字体渲染存在合法差异。
+      - name: Regenerate preview screenshot
+        run: npm run screenshot
+
       - name: Export PDF
         run: npm run export:pdf
 
