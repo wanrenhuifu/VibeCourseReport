@@ -69,10 +69,13 @@ const watchDirs = [
 for (const target of watchDirs) {
   try {
     watch(target, { recursive: true }, (eventType, filename) => {
-      if (filename) {
-        console.log(`  变化：${filename} (${eventType})`);
-        scheduleScreenshot();
-      }
+      if (!filename) return;
+      // 忽略本脚本自己的输出文件：update-preview.mjs 会把 preview.png 和
+      // preview.sources.json 写进 assets/，不过滤会形成"生成截图→触发 watch→
+      // 再次生成"的无限循环
+      if (filename === 'preview.png' || filename === 'preview.sources.json') return;
+      console.log(`  变化：${filename} (${eventType})`);
+      scheduleScreenshot();
     });
   } catch (e) {
     console.warn(`无法监听 ${target}：${e.message}`);

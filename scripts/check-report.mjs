@@ -120,11 +120,52 @@ if (contentH2H3.length > 0) {
   }
 }
 
-// --- 5. README 预览截图与同步标记 ---
+// --- 5. 脚注锚点 ---
+// 检查正文脚注引用 <sup class="fn-ref"><a href="#fn-N"> 与底部 <ol class="footnotes"> 的对应。
+// 属性引号必须用直引号 "：曾出现过用弯引号 ” 包裹属性导致样式与跳转全部失效的回归，
+// 此处正则按直引号匹配，弯引号写法会因匹配不到 id 而报错（防回归）。
+console.log('\n[5] 脚注锚点');
+const fnRefRe = /<sup class="fn-ref"[^>]*>\s*<a[^>]*href="#(fn-\d+)"[^>]*>/g;
+const fnRefTargets = [];
+while ((m = fnRefRe.exec(html)) !== null) fnRefTargets.push(m[1]);
+
+if (fnRefTargets.length === 0) {
+  warn('未找到任何脚注引用（<sup class="fn-ref">）');
+} else {
+  for (const target of fnRefTargets) {
+    const idRe = new RegExp(`\\bid\\s*=\\s*"${target}"`);
+    if (idRe.test(html)) {
+      ok(`脚注引用 #${target} → 对应 <li id="${target}"> 存在`);
+    } else {
+      err(`脚注引用 #${target} 在文档中找不到对应的 <li id="${target}">，跳转将失效`);
+    }
+  }
+}
+
+// 反向检查：每个脚注 li 都应被正文引用，回跳链接都应指向存在的 id
+const fnLiRe = /<li id="(fn-\d+)">/g;
+const fnIds = [];
+while ((m = fnLiRe.exec(html)) !== null) fnIds.push(m[1]);
+for (const id of fnIds) {
+  if (!fnRefTargets.includes(id)) {
+    warn(`脚注 <li id="${id}"> 在正文中没有对应的引用（死脚注）`);
+  }
+}
+const fnBackRe = /href="#(fnref-\d+)"/g;
+while ((m = fnBackRe.exec(html)) !== null) {
+  const idRe = new RegExp(`\\bid\\s*=\\s*"${m[1]}"`);
+  if (idRe.test(html)) {
+    ok(`回跳链接 #${m[1]} → 对应 id 存在`);
+  } else {
+    err(`回跳链接 #${m[1]} 找不到对应的 id，点击 ↩ 无法回到正文`);
+  }
+}
+
+// --- 6. README 预览截图与同步标记 ---
 // 防止"改了 index.html / styles.css 却忘了重跑 npm run screenshot"导致的过期 preview.png
 // 被提交上去（CI 的 npm run check 会因此失败）。判定依据是 update-preview.mjs 写入的
 // assets/preview.sources.json 里的源文件指纹，与当前源文件逐一比对，跨平台可靠。
-console.log('\n[5] 预览截图（assets/preview.png）');
+console.log('\n[6] 预览截图（assets/preview.png）');
 const previewPath = resolve(ROOT, 'assets/preview.png');
 const manifestPath = resolve(ROOT, 'assets/preview.sources.json');
 

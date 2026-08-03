@@ -23,6 +23,7 @@ import { existsSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchChrome } from './lib/chrome.mjs';
+import { checkCjkFonts, checkMissingAssets } from './lib/page-checks.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
@@ -64,19 +65,41 @@ try {
   const page = await browser.newPage();
   await page.emulateMediaType('screen');
 
-  // 设置页面加载超时：避免因挂起的网络请求（如不存在的远程字体 CDN）导致无限等待
-  await page.goto(pathToFileURL(htmlPath).href, { waitUntil: 'networkidle0', timeout: 30_000 });
+  // 页面加载：不用 networkidle0——KaTeX 从 CDN 加载，断网 / CDN 挂起时
+  // DOMContentLoaded 永不触发（defer 脚本未执行完），goto 会干等 30s 超时，
+  // 整个导出直接失败。改为两段式：goto 用 domcontentloaded + 短超时，再显式等网络空闲。
+  // 注意：defer 脚本不阻塞 DOM 解析，CDN 挂起时文档树仍会解析完整，
+  // 超时后拦截 cdn.jsdelivr.net 请求继续渲染即可——公式退回 HTML 实体 / Unicode 显示
+  // （模板公式本就有实体兜底，不依赖 KaTeX 也能看懂）。
+  let cdnAvailable = true;
+  try {
+    await page.goto(pathToFileURL(htmlPath).href, { waitUntil: 'domcontentloaded', timeout: 10_000 });
+    await page.waitForNetworkIdle({ timeout: 5_000, idleTime: 500 });
+  } catch (e) {
+    // 只有超时（TimeoutError）才降级为离线渲染；其他错误（如浏览器崩溃）直接抛出
+    if (e?.name !== 'TimeoutError') throw e;
+    cdnAvailable = false;
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      if (req.url().includes('cdn.jsdelivr.net')) req.abort();
+      else req.continue();
+    });
+  }
+  if (!cdnAvailable) {
+    console.warn('⚠ 警告：KaTeX CDN 不可达（已继续渲染，公式将显示为 HTML 实体 / Unicode）');
+    hasWarnings = true;
+  }
+
+  // 确保正文已解析（'commit' 之后 DOM 可能仍在解析，后续检测依赖完整 DOM）
+  await page.waitForSelector('.cover', { timeout: 10_000 });
 
   // 等待字体就绪（evaluate 不带 Handle 会等待返回的 Promise 在浏览器内 resolve）
   await page.evaluate(() => document.fonts.ready);
 
   // ---------- 读取页面元数据 ----------
-  const pageMeta = await page.evaluate(() => {
-    const title = document.title || '';
-    const authorEl = document.querySelector('meta[name="author"]');
-    const author = authorEl ? authorEl.getAttribute('content') || '' : '';
-    return { title, author };
-  });
+  const pageMeta = await page.evaluate(() => ({
+    title: document.title || '',
+  }));
   if (pageMeta.title) {
     console.log(`报告标题：${pageMeta.title}`);
     // 将页面标题注入为 PDF 文档标题（通过 <title> 元素，Chromium 读取后写入 PDF metadata）
@@ -84,59 +107,18 @@ try {
   }
 
   // ---------- CJK 字体检测 ----------
-  // 两个常见判据都不灵（已在 headless Chrome 实测排除）：
-  // 1. getComputedStyle().fontFamily 返回的是 CSS **声明**的字体列表（必含
-  //    Noto/SimSun 等名字），不是渲染时实际命中的字体，字符串匹配恒为假阳性；
-  // 2. document.fonts.check() 对**不存在**的字体也返回 true，对不覆盖给定文本的
-  //    字体同样返回 true，无法区分"已安装且能渲染"。
-  // 可靠判据——宽度对比：同一段混合探针文本渲染两次，一次用页面字体栈，一次强制
-  // 走必然不存在的字体（Chromium 回落到 last-resort 字体，每个字符都是等宽方块，
-  // 即 tofu 的真实形态）。两宽度一致 ⇒ 页面字体栈没命中任何能渲染这些字形的字体，
-  // PDF 中文必为方块。探针混入拉丁字母是因为真实字体中拉丁字形宽度必然不同于
-  // 等宽方块，防止"CJK 字形恰为 1em 宽、总宽与方块串巧合一致"的漏报。
-  const fontCheck = await page.evaluate(() => {
-    const pageStack = getComputedStyle(document.body).fontFamily;
-    const probeText = '中A文B测C试D';
-    const measure = (fontFamily) => {
-      const s = document.createElement('span');
-      s.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:72px;';
-      s.style.fontFamily = fontFamily;
-      s.textContent = probeText;
-      document.body.appendChild(s);
-      const w = s.getBoundingClientRect().width;
-      s.remove();
-      return w;
-    };
-    const tofuWidth = measure('"VibeReportLastResortProbe_NoSuchFont"');
-    const pageWidth = measure(pageStack);
-    return { pageStack, tofuWidth, pageWidth, hasCjk: Math.abs(pageWidth - tofuWidth) > 0.01 };
-  });
-  if (!fontCheck.hasCjk) {
-    console.warn(
-      `⚠ 警告：页面字体栈无法渲染 CJK 字形（声明字体: ${fontCheck.pageStack}）。\n` +
-      `   无头 Linux / Docker 环境需安装 CJK 字体包，否则 PDF 中文会显示为方块（tofu）。\n` +
-      `   Debian/Ubuntu: sudo apt install fonts-noto-cjk\n` +
-      `   RHEL/Fedora:   sudo yum install google-noto-cjk-fonts`
-    );
+  // 判据细节见 scripts/lib/page-checks.mjs（宽度对比探针，两个常见判据
+  // getComputedStyle().fontFamily / document.fonts.check() 都不可靠，已实测排除）
+  const fontResult = await checkCjkFonts(page);
+  if (!fontResult.ok) {
+    console.warn(fontResult.message);
     hasWarnings = true;
   }
 
   // ---------- 缺失资源预检 ----------
-  const missingAssets = await page.evaluate(() => {
-    const missing = [];
-    // 检查所有图片是否成功加载
-    for (const img of document.images) {
-      if (img.naturalWidth === 0 && img.naturalHeight === 0) {
-        missing.push(img.getAttribute('src') || img.currentSrc || '(未知来源)');
-      }
-    }
-    return missing;
-  });
-  if (missingAssets.length > 0) {
-    console.warn(
-      `⚠ 警告：${missingAssets.length} 个图片资源加载失败，PDF 中对应位置将为空白：\n` +
-      `   ${missingAssets.join('\n   ')}`
-    );
+  const assetResult = await checkMissingAssets(page);
+  if (!assetResult.ok) {
+    console.warn(assetResult.message);
     hasWarnings = true;
   }
 
@@ -163,11 +145,13 @@ try {
       count += 1;
     });
 
-    // 检测前置部分溢出：固定页高 + overflow:hidden 会静默裁掉超长内容，必须显式告警
+    // 检测前置部分溢出：固定页高 + overflow:hidden 会静默裁掉超长内容，必须显式告警。
+    // 用 querySelectorAll 逐个检查（.abstract 有两个：中文 + 英文），避免英文摘要溢出漏报
     const overflowing = [];
-    [['.cover', '封面'], ['.abstract', '摘要'], ['.toc', '目录']].forEach(([sel, name]) => {
-      const el = document.querySelector(sel);
-      if (el && el.scrollHeight - el.clientHeight > 0.5) overflowing.push(name);
+    [['.cover', '封面'], ['.abstract', '中文摘要'], ['.abstract-en', '英文摘要'], ['.toc', '目录']].forEach(([sel, name]) => {
+      document.querySelectorAll(sel).forEach((el) => {
+        if (el.scrollHeight - el.clientHeight > 0.5) overflowing.push(name);
+      });
     });
 
     // 读取 --sans 变量供 PDF 页脚使用（页脚字体与 CSS 始终保持一致，无需手动同步）

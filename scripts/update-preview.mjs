@@ -19,14 +19,16 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { launchChrome } from './lib/chrome.mjs';
+import { checkCjkFonts, checkMissingAssets } from './lib/page-checks.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, '..');
 const htmlPath = resolve(ROOT, 'index.html');
 const outputPath = resolve(ROOT, 'assets/preview.png');
 
-// 截图源文件清单（内容变化即视为截图已过期，见下面的"同步标记"）
-const SOURCE_FILES = ['index.html', 'styles.css', 'assets/school-emblem.svg', 'scripts/update-preview.mjs'];
+// 截图源文件清单（内容变化即视为截图已过期，见下面的"同步标记"）。
+// page-checks.mjs 会改变告警判定行为（决定截图是否落盘），同样计入指纹
+const SOURCE_FILES = ['index.html', 'styles.css', 'assets/school-emblem.svg', 'scripts/update-preview.mjs', 'scripts/lib/page-checks.mjs'];
 const MANIFEST_PATH = resolve(ROOT, 'assets/preview.sources.json');
 
 // 封面下方保留的灰底留白（px）。封面与摘要之间的灰色间隔（.page > section + section 的
@@ -127,54 +129,17 @@ try {
   // 调整视口后等两帧，确保重排完成再截图
   await page.evaluate(() => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))));
 
-  // ---------- CJK 字体检测（与 export-pdf.mjs 同源） ----------
-  // 可靠判据——宽度对比：同一段混合探针文本渲染两次，一次用页面字体栈，一次强制
-  // 走必然不存在的字体（Chromium 回落到 last-resort 字体，每个字符都是等宽方块，
-  // 即 tofu 的真实形态）。两宽度一致 ⇒ 页面字体栈没命中任何能渲染这些字形的字体，
-  // 截图中文必为方块。探针混入拉丁字母是因为真实字体中拉丁字形宽度必然不同于
-  // 等宽方块，防止"CJK 字形恰为 1em 宽、总宽与方块串巧合一致"的漏报。
-  const fontCheck = await page.evaluate(() => {
-    const pageStack = getComputedStyle(document.body).fontFamily;
-    const probeText = '中A文B测C试D';
-    const measure = (fontFamily) => {
-      const s = document.createElement('span');
-      s.style.cssText = 'position:absolute;visibility:hidden;white-space:nowrap;font-size:72px;';
-      s.style.fontFamily = fontFamily;
-      s.textContent = probeText;
-      document.body.appendChild(s);
-      const w = s.getBoundingClientRect().width;
-      s.remove();
-      return w;
-    };
-    const tofuWidth = measure('"VibeReportLastResortProbe_NoSuchFont"');
-    const pageWidth = measure(pageStack);
-    return { pageStack, tofuWidth, pageWidth, hasCjk: Math.abs(pageWidth - tofuWidth) > 0.01 };
-  });
-  if (!fontCheck.hasCjk) {
-    console.warn(
-      `⚠ 警告：页面字体栈无法渲染 CJK 字形（声明字体: ${fontCheck.pageStack}）。\n` +
-      `   无头 Linux / Docker 环境需安装 CJK 字体包，否则截图中文会显示为方块（tofu）。\n` +
-      `   Debian/Ubuntu: sudo apt install fonts-noto-cjk\n` +
-      `   RHEL/Fedora:   sudo yum install google-noto-cjk-fonts`
-    );
+  // ---------- CJK 字体检测（与 export-pdf.mjs 共用 scripts/lib/page-checks.mjs） ----------
+  const fontResult = await checkCjkFonts(page);
+  if (!fontResult.ok) {
+    console.warn(fontResult.message);
     hasWarnings = true;
   }
 
   // ---------- 缺失资源预检 ----------
-  const missingAssets = await page.evaluate(() => {
-    const missing = [];
-    for (const img of document.images) {
-      if (img.naturalWidth === 0 && img.naturalHeight === 0) {
-        missing.push(img.getAttribute('src') || img.currentSrc || '(未知来源)');
-      }
-    }
-    return missing;
-  });
-  if (missingAssets.length > 0) {
-    console.warn(
-      `⚠ 警告：${missingAssets.length} 个图片资源加载失败，截图中对应位置将为空白：\n` +
-      `   ${missingAssets.join('\n   ')}`
-    );
+  const assetResult = await checkMissingAssets(page);
+  if (!assetResult.ok) {
+    console.warn(assetResult.message);
     hasWarnings = true;
   }
 

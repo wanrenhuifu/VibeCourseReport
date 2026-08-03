@@ -69,10 +69,12 @@ const watchDirs = [
 for (const target of watchDirs) {
   try {
     watch(target, { recursive: true }, (eventType, filename) => {
-      if (filename) {
-        console.log(`  变化：${filename} (${eventType})`);
-        scheduleExport();
-      }
+      if (!filename) return;
+      // 忽略截图管线的输出文件（assets/ 中会生成 preview.png / preview.sources.json），
+      // 否则两个 watch 模式同时运行时会产生无意义的重复导出
+      if (filename === 'preview.png' || filename === 'preview.sources.json') return;
+      console.log(`  变化：${filename} (${eventType})`);
+      scheduleExport();
     });
   } catch (e) {
     console.warn(`无法监听 ${target}：${e.message}`);

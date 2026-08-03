@@ -1,3 +1,8 @@
+# 水课老师首次体验VCR(VibeCourseReport)，被吓到眩晕瘫坐，那一刻就像看到原子弹爆炸!
+
+![Meme](Meme.png)
+
+
 # VibeCourseReport · Vibe 课程报告
 
 > 像 vibe coding 一样写课程作业报告：告诉 AI 你要写什么，它直接修改网页报告，再一键导出为 A4 多页 PDF。

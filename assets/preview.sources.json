@@ -1,8 +1,9 @@
 {
   "sources": {
-    "index.html": "b5c9bf1209e7261e9e58e04a01af27274aa6365c757c70179447d0addfc4e8fb",
+    "index.html": "d8fbb7f147b06f57c82d2dc3658379b0a23fa7f8fe9fa6e0a5c16f78dacd4e32",
     "styles.css": "c71093478ab5422e05bb11531bb3b3ee6e12f371a0effe11044c97b0f11f1dfb",
     "assets/school-emblem.svg": "caeacb39c05034e2433f4c74e28c96fba4725acee69f935b644469c054616403",
-    "scripts/update-preview.mjs": "ef5c5f23db58309844aa2e805ea617836d43ebc82b96ff3ce78cf0c23d21f436"
+    "scripts/update-preview.mjs": "e4346121e524becd61d9a5b093cbfaabce8a4267dc113ef223d63bdb929266d5",
+    "scripts/lib/page-checks.mjs": "5b5fe1941b81dc55e99018b87aa46db5bc533fd51bb11e71d2edebf952f9580f"
   }
 }
