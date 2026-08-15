@@ -16,6 +16,14 @@
 - 导出脚本离线兜底：KaTeX CDN 不可达（断网 / 挂起）时不再干等 30s 失败，改为拦截 CDN 请求继续渲染，公式退回 HTML 实体 / Unicode 显示并告警
 - 抽取共享页面检测 `scripts/lib/page-checks.mjs`：CJK 字体与缺失资源检测从 export-pdf / update-preview 两处收口为一处，告警文案统一为"导出产物"
 
+### Added
+- `npm run build:toc` 现在同时自动重排章节编号：已有数字前缀的标题（如"2.1　..."）按实际顺序重新编号（h2 → `1``2`…，h3 → `2.1``2.2`…），增删章节后不再需要手动顺延；无数字前缀的标题（如"参考文献"、附录）保持原样。编号与标题层级不符时只告警不改动
+- `npm run check` 新增章节编号连续性校验（跳号/重复/层级不符时告警，并提示运行 `build:toc` 修复）
+
+### Fixed
+- `check-report.mjs` 与 `build-toc.mjs` 的 HTML 属性匹配现兼容单/双引号：此前按双引号硬匹配，AI 偶尔生成单引号属性（如 `id='sec-1'`）会被误判为"id 不存在 / 标题缺失"
+- `build-toc.mjs` 写回文件改用函数式替换，避免正文中的 `$$`（KaTeX 公式）被 `String.replace` 当作替换模式破坏
+
 ## [1.0.0] — 2026-07-27
 
 ### Added

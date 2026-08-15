@@ -28,8 +28,8 @@ description: 编辑 VibeCourseReport 网页课程报告模板（index.html / sty
 | 正文 | `section.content` | `h2` 章 / `h3` 节，参考文献 `h2#sec-ref` + `ol.references` |
 
 - 封面 / 摘要 / 目录在导出时各占一整页，**不要**在这三个区块里塞超长内容（会被裁掉）；正文长度不限。
-- 新增章节时：在正文加 `h2 id="sec-N"`，并在目录加对应 `a.toc-item`，`href` 与 `data-toc-target` 指向该 id。
-- 章节编号直接写在标题文本里（如 `2.1　...`），新增/删除章节后顺手重排编号。
+- 新增章节时：在正文加 `h2 id="sec-N"`，目录条目由 `npm run build:toc` 自动生成（`href` 与 `data-toc-target` 指向该 id）。
+- 章节编号写在标题文本开头（如 `2.1　...`），**由 `npm run build:toc` 自动重排**：已有数字前缀的标题按实际顺序重新编号（h2 → `1``2`…，h3 → `2.1``2.2`…），无需手动顺延。没有数字前缀的标题（如"参考文献"、附录）保持原样。编号与标题层级不符（如 h2 标了 `2.1`）时脚本只告警不改动，需人工检查。
 
 ## 排版组件
 
@@ -67,7 +67,7 @@ markitdown https://example.com/assignment
    - 先检查 `requirements/` 目录：如果有作业要求文件，用 `markitdown` 转换后仔细阅读。
    - 仍不清楚的就问用户。
 2. 改 `index.html` 内容，必要时改 `styles.css`（主题色 `--accent`、字号、行距等 CSS 变量）。
-3. 如果新增或删除了章节，运行目录自动生成：
+3. 如果新增或删除了章节（或改动过章节编号），运行目录自动生成——同时会自动重排章节编号：
    ```bash
    npm run build:toc
    ```

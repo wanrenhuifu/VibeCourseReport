@@ -19,8 +19,8 @@ npm run dev              # 本地预览 http://localhost:4173
 npm run preview          # 同上（前端肌肉记忆别名）
 npm run export:pdf       # 导出 PDF → export/vibe-course-report-demo.pdf
 npm run export:pdf:watch # 监听源文件变化自动导出
-npm run build:toc        # 从正文标题自动生成目录
-npm run check            # 结构校验（目录对应、图片存在、标题 id、脚注锚点、preview.png 是否过期）
+npm run build:toc        # 从正文标题自动生成目录，并自动重排章节编号
+npm run check            # 结构校验（目录对应、图片存在、标题 id、章节编号连续性、脚注锚点、preview.png 是否过期）
 npm run screenshot       # 重新生成 README 预览截图 assets/preview.png
 npm run screenshot:watch # 监听源文件变化自动更新预览截图
 ```
@@ -30,8 +30,8 @@ npm run screenshot:watch # 监听源文件变化自动更新预览截图
 - `index.html` — 报告源文件（封面、摘要、目录、正文、参考文献）
 - `styles.css` — 排版源文件（页面几何、三线表、插图、公式）
 - `scripts/export-pdf.mjs` — PDF 导出脚本（Chromium screen 布局 → A4 多页 PDF，含 CJK 字体 / 缺失资源检测）
-- `scripts/build-toc.mjs` — 目录自动生成
-- `scripts/check-report.mjs` — 结构校验
+- `scripts/build-toc.mjs` — 目录自动生成 + 章节编号自动重排
+- `scripts/check-report.mjs` — 结构校验（含章节编号连续性，属性匹配兼容单/双引号）
 - `scripts/export-pdf-watch.mjs` / `scripts/update-preview-watch.mjs` — Watch 模式
 - `scripts/update-preview.mjs` — README 预览截图生成（含构图 / 字体 / 资源校验）
 - `scripts/lib/chrome.mjs` — 共享 Chromium 探测与启动（浏览器相关修复只改这一处）

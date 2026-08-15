@@ -27,10 +27,10 @@ node scripts/export-pdf.mjs export/自定义文件名.pdf
 # Watch 模式：监听源文件变化自动重新导出
 npm run export:pdf:watch
 
-# 自动生成目录（从正文 h2/h3 扫描，更新 .toc-list）
+# 自动生成目录（从正文 h2/h3 扫描，更新 .toc-list）并自动重排章节编号
 npm run build:toc
 
-# 结构校验（检查目录对应、图片存在、标题 id、preview.png 是否过期）
+# 结构校验（检查目录对应、图片存在、标题 id、章节编号连续性、preview.png 是否过期）
 npm run check
 
 # 重新生成 README 预览截图（assets/preview.png，模板内容/样式变更后重跑以保持同步）
@@ -66,8 +66,8 @@ markitdown requirements/作业要求.pdf
 | `index.html` | 报告源文件：封面、摘要、目录、正文、参考文献。`<main class="page">` 内按 section 组织 |
 | `styles.css` | 排版源文件：页面几何、字体、三线表、插图、公式、参考文献样式。通过 `--accent` 等 CSS 变量控制主题 |
 | `scripts/export-pdf.mjs` | PDF 导出脚本：启动 Puppeteer → 加载页面 → 注入 `body.exporting` → 回填目录页码 → 分页导出 |
-| `scripts/build-toc.mjs` | 目录自动生成：从 `.content` 扫描 h2/h3，自动更新 `.toc-list` |
-| `scripts/check-report.mjs` | 结构校验：检查 data-toc-target ↔ id 对应、图片存在、标题 id 完整性、preview.png 是否过期（比对 `assets/preview.sources.json` 里的源文件指纹） |
+| `scripts/build-toc.mjs` | 目录自动生成：从 `.content` 扫描 h2/h3，自动更新 `.toc-list`；并自动重排章节编号（已有数字前缀的标题按顺序重编号，无数字前缀的标题不动） |
+| `scripts/check-report.mjs` | 结构校验：检查 data-toc-target ↔ id 对应、图片存在、标题 id 完整性、章节编号连续性、preview.png 是否过期（比对 `assets/preview.sources.json` 里的源文件指纹）。属性匹配兼容单/双引号 |
 | `scripts/export-pdf-watch.mjs` | Watch 模式：监听源文件变化自动重新导出 |
 | `scripts/update-preview.mjs` | README 预览截图脚本：渲染 index.html 封面区域到 `assets/preview.png`，内置 CJK 字体 / 缺失资源 / 封面构图校验（有告警即退出码 1），成功后维护 `assets/preview.sources.json` 同步标记 |
 | `scripts/update-preview-watch.mjs` | 截图 Watch 模式：监听源文件变化自动重新生成 preview.png |
